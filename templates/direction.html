@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ direction.name }}{% endblock %}
+{% block content %}
+    <h1>{{ direction.name }}</h1>
+    <p>{{ direction.description }}</p>
+    <h3>Формулы</h3>
+    <ul>
+        {% for formula in direction.formulas %}
+            <li>{{ formula }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

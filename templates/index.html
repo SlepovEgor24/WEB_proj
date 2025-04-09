@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+    <h1>Направления</h1>
+    <div class="row">
+        {% for direction in directions %}
+            <div class="col-3">
+                <div class="direction-square" onclick="toggleDescription(this, {{ loop.index0 }})">
+                    <div class="content">
+                        <div class="header">
+                            <h5>{{ direction.name }}</h5>
+                            <a href="/direction/{{ direction.id }}" class="btn btn-sm btn-primary">Формулы</a>
+                        </div>
+                        <img src="{{ url_for('static', filename='images/' + direction.image) }}" class="image" alt="{{ direction.name }}">
+                        <div class="description {{ 'left' if loop.index0 % 4 == 3 else 'right' }}">
+                            {{ direction.description }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        function toggleDescription(element, index) {
+            // Находим все описания
+            const allDescriptions = document.querySelectorAll('.description');
+            // Закрываем все
+            allDescriptions.forEach(desc => {
+                if (desc !== element.querySelector('.description')) {
+                    desc.style.display = 'none';
+                }
+            });
+            // Переключаем текущее
+            const desc = element.querySelector('.description');
+            desc.style.display = desc.style.display === 'block' ? 'none' : 'block';
+        }
+    </script>
+{% endblock %}

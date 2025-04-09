@@ -1,0 +1,79 @@
+.top-bar {
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    min-height: 80px;
+}
+
+.bottom-bar {
+    background-color: #000;
+    width: 100%;
+}
+
+.main-content {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.sidebar {
+    border-right: 1px solid #ddd;
+    padding: 20px;
+}
+
+.direction-square {
+    width: 100%;
+    padding-top: 100%;
+    background-color: #f8f9fa;
+    position: relative;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.direction-square .content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+}
+
+.direction-square .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.direction-square .header h5 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.direction-square .image {
+    width: 100%;
+    height: 70%;
+    object-fit: cover;
+    margin-top: 10px;
+}
+
+.direction-square .description {
+    display: none;
+    position: absolute;
+    top: 0;
+    width: 300px; /* Увеличиваем ширину с 200px до 300px */
+    height: 100%;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px;
+    font-size: 1.1rem; /* Увеличиваем шрифт с дефолтного (~16px) до ~17.6px */
+    z-index: 10;
+}
+
+.direction-square .description.right {
+    left: 100%;
+}
+
+.direction-square .description.left {
+    right: 100%;
+}
