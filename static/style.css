@@ -21,7 +21,7 @@
 
 .direction-square {
     width: 100%;
-    padding-top: 100%;
+    padding-top: 100%; /* Возвращаем квадратное соотношение */
     background-color: #f8f9fa;
     position: relative;
     margin-bottom: 20px;
@@ -61,12 +61,12 @@
     display: none;
     position: absolute;
     top: 0;
-    width: 300px; /* Увеличиваем ширину с 200px до 300px */
+    width: 300px;
     height: 100%;
     background-color: #fff;
     border: 1px solid #ddd;
     padding: 10px;
-    font-size: 1.1rem; /* Увеличиваем шрифт с дефолтного (~16px) до ~17.6px */
+    font-size: 1.1rem;
     z-index: 10;
 }
 
@@ -76,4 +76,37 @@
 
 .direction-square .description.left {
     right: 100%;
+}
+
+/* Стили для всплывающих окон */
+#userPopup, #logoutPopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 30px; /* Увеличиваем отступы */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    text-align: center;
+}
+
+#userPopup .popup-content, #logoutPopup .popup-content {
+    max-width: 400px; /* Увеличиваем ширину */
+    font-size: 1.25rem; /* Увеличиваем шрифт */
+}
+
+#userPopup .popup-content h3 {
+    font-size: 1.75rem; /* Увеличиваем заголовок */
+}
+
+#logoutPopup .popup-content button {
+    font-size: 1.25rem; /* Увеличиваем текст кнопок */
+    padding: 10px 20px; /* Увеличиваем размер кнопок */
+}
+
+.user-link {
+    cursor: pointer;
 }
