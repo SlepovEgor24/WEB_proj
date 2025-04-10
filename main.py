@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from data.db import db, User, init_db
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Замени на свой ключ
+app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -41,7 +41,7 @@ def direction(direction_id):
     user = get_current_user()
     direction = next((d for d in directions if d["id"] == direction_id), None)
     if direction:
-        return render_template('direction.html', direction=direction, user=user)
+        return render_template('direction.html', direction=direction, user=user, directions=directions)
     return "Направление не найдено", 404
 
 
@@ -61,11 +61,10 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        # Автоматический вход
         flask_session['user_id'] = new_user.id
         return redirect(url_for('index'))
 
-    return render_template('register.html')
+    return render_template('register.html', directions=directions)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -80,7 +79,7 @@ def login():
             return redirect(url_for('index'))
         return jsonify({'error': 'Неверный email или пароль'}), 401
 
-    return render_template('login.html')
+    return render_template('login.html', directions=directions)
 
 
 @app.route('/logout')

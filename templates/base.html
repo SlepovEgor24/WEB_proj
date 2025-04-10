@@ -27,11 +27,14 @@
     <div class="container-fluid main-content">
         <div class="row">
             <nav class="col-md-3 col-lg-2 sidebar">
-                <h5>Каталог</h5>
+                <h5>Каталог:</h5> <!-- Добавили двоеточие -->
                 <ul class="nav flex-column">
                     <li class="nav-item"><a href="/" class="btn btn-outline-primary w-100 mb-2">Всё</a></li>
-                    <li class="nav-item"><a href="/direction/силы" class="btn btn-outline-primary w-100 mb-2">Силы</a></li>
-                    <li class="nav-item"><a href="/direction/масса" class="btn btn-outline-primary w-100 mb-2">Масса</a></li>
+                    {% for direction in directions %}
+                        <li class="nav-item">
+                            <a href="{{ url_for('direction', direction_id=direction.id) }}" class="btn btn-outline-primary w-100 mb-2">{{ direction.name }}</a>
+                        </li>
+                    {% endfor %}
                 </ul>
             </nav>
             <main class="col-md-9 col-lg-10">
@@ -50,7 +53,6 @@
         </div>
     </footer>
 
-    <!-- Всплывающее окно пользователя -->
     {% if session.user_id %}
     <div id="userPopup" class="popup">
         <div class="popup-content">
@@ -63,7 +65,6 @@
     </div>
     {% endif %}
 
-    <!-- Всплывающее окно выхода -->
     <div id="logoutPopup" class="popup">
         <div class="popup-content">
             <p>Действительно ли вы хотите выйти?</p>
@@ -95,6 +96,21 @@
         function confirmLogout() {
             window.location.href = "{{ url_for('logout') }}";
         }
+
+        document.addEventListener('click', function(event) {
+            const userPopup = document.getElementById('userPopup');
+            const logoutPopup = document.getElementById('logoutPopup');
+            const userLink = document.querySelector('.user-link');
+            const logoutLink = document.querySelector('a[onclick="toggleLogoutPopup()"]');
+
+            if (userPopup && !userPopup.contains(event.target) && event.target !== userLink) {
+                userPopup.style.display = 'none';
+            }
+
+            if (logoutPopup && !logoutPopup.contains(event.target) && event.target !== logoutLink) {
+                logoutPopup.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
