@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Поддержка{% endblock %}
+{% block content %}
+    <h1>Поддержка</h1>
+    {% if user and user.is_admin == 1 %}
+    <div class="admin-buttons text-end mb-3">
+        <button class="btn btn-primary" onclick="toggleAdminPopup()">Добавить администратора</button>
+        <button class="btn btn-danger" onclick="toggleRemoveAdminPopup()">Перестать быть админом</button>
+    </div>
+
+    <div id="adminPopup" class="popup">
+        <div class="popup-content">
+            <form method="post" action="{{ url_for('support') }}">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email пользователя</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <input type="hidden" name="action" value="add_admin">
+                <button type="submit" class="btn btn-primary">Добавить</button>
+                {% if error_message %}
+                    <p class="text-danger mt-2">{{ error_message }}</p>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div id="removeAdminPopup" class="popup">
+        <div class="popup-content">
+            <p>Хотите отменить права администратора?</p>
+            <form method="post" action="{{ url_for('support') }}">
+                <input type="hidden" name="action" value="remove_admin">
+                <button type="submit" class="btn btn-primary me-2">Да</button>
+                <button type="button" class="btn btn-secondary" onclick="toggleRemoveAdminPopup()">Нет</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+        function toggleAdminPopup() {
+            const adminPopup = document.getElementById('adminPopup');
+            const removeAdminPopup = document.getElementById('removeAdminPopup');
+            adminPopup.style.display = adminPopup.style.display === 'block' ? 'none' : 'block';
+            if (removeAdminPopup.style.display === 'block') removeAdminPopup.style.display = 'none';
+        }
+
+        function toggleRemoveAdminPopup() {
+            const adminPopup = document.getElementById('adminPopup');
+            const removeAdminPopup = document.getElementById('removeAdminPopup');
+            removeAdminPopup.style.display = removeAdminPopup.style.display === 'block' ? 'none' : 'block';
+            if (adminPopup.style.display === 'block') adminPopup.style.display = 'none';
+        }
+
+        document.addEventListener('click', function(event) {
+            const adminPopup = document.getElementById('adminPopup');
+            const removeAdminPopup = document.getElementById('removeAdminPopup');
+            const addAdminButton = document.querySelector('button[onclick="toggleAdminPopup()"]');
+            const removeAdminButton = document.querySelector('button[onclick="toggleRemoveAdminPopup()"]');
+
+            if (adminPopup && !adminPopup.contains(event.target) && event.target !== addAdminButton) {
+                adminPopup.style.display = 'none';
+            }
+            if (removeAdminPopup && !removeAdminPopup.contains(event.target) && event.target !== removeAdminButton) {
+                removeAdminPopup.style.display = 'none';
+            }
+        });
+    </script>
+{% endblock %}

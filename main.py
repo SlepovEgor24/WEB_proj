@@ -7,7 +7,28 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
+def create_initial_users():
+    with app.app_context():
+        admin = db.session.query(User).filter_by(email='admin@example.com').first()
+        if not admin:
+            hashed_password = generate_password_hash('admin123')
+            new_admin = User(name='Admin', email='admin@example.com', password=hashed_password, is_admin=1)
+            db.session.add(new_admin)
+
+        first_user = db.session.query(User).filter_by(email='egorslepov868@gmail.com').first()
+        if first_user:
+            first_user.is_admin = 1
+        else:
+            hashed_password = generate_password_hash('password123')
+            new_first = User(name='First', email='egorslepov868@gmail.com', password=hashed_password, is_admin=1)
+            db.session.add(new_first)
+
+        db.session.commit()
+
+
 init_db(app)
+create_initial_users()
 
 directions = [
     {"id": "механика", "name": "Механика", "description": "Изучение движения и равновесия.",
@@ -51,19 +72,15 @@ def register():
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-
         existing_user = db.session.query(User).filter_by(email=email).first()
         if existing_user:
             return jsonify({'error': 'Email уже зарегистрирован'}), 400
-
         hashed_password = generate_password_hash(password)
         new_user = User(name=name, email=email, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
-
         flask_session['user_id'] = new_user.id
         return redirect(url_for('index'))
-
     return render_template('register.html', directions=directions)
 
 
@@ -72,13 +89,11 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-
         user = db.session.query(User).filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             flask_session['user_id'] = user.id
             return redirect(url_for('index'))
         return jsonify({'error': 'Неверный email или пароль'}), 401
-
     return render_template('login.html', directions=directions)
 
 
@@ -86,6 +101,43 @@ def login():
 def logout():
     flask_session.pop('user_id', None)
     return redirect(url_for('index'))
+
+
+@app.route('/support', methods=['GET', 'POST'])
+def support():
+    user = get_current_user()
+    show_admin_popup = flask_session.get('show_admin_popup', False)
+    show_remove_admin_popup = flask_session.get('show_remove_admin_popup', False)
+    error_message = None
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'add_admin' and user and user.is_admin == 1:
+            email = request.form.get('email')
+            target_user = db.session.query(User).filter_by(email=email).first()
+            if target_user:
+                target_user.is_admin = 1
+                db.session.commit()
+                flask_session['show_admin_popup'] = False
+            else:
+                error_message = 'Пользователя с таким email не существует'
+                flask_session['show_admin_popup'] = True
+        elif action == 'remove_admin' and user and user.is_admin == 1:
+            user.is_admin = 0
+            db.session.commit()
+            flask_session['show_remove_admin_popup'] = False
+            return redirect(url_for('index'))
+        elif action == 'toggle_admin_popup' and user and user.is_admin == 1:
+            flask_session['show_admin_popup'] = not show_admin_popup
+            flask_session['show_remove_admin_popup'] = False
+        elif action == 'toggle_remove_admin_popup' and user and user.is_admin == 1:
+            flask_session['show_remove_admin_popup'] = not show_remove_admin_popup
+            flask_session['show_admin_popup'] = False
+
+    return render_template('support.html', user=user, directions=directions,
+                           show_admin_popup=show_admin_popup,
+                           show_remove_admin_popup=show_remove_admin_popup,
+                           error_message=error_message)
 
 
 if __name__ == '__main__':

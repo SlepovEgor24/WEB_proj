@@ -21,7 +21,7 @@
 
 .direction-square {
     width: 100%;
-    padding-top: 100%; /* Возвращаем квадратное соотношение */
+    padding-top: 100%;
     background-color: #f8f9fa;
     position: relative;
     margin-bottom: 20px;
@@ -78,8 +78,7 @@
     right: 100%;
 }
 
-/* Стили для всплывающих окон */
-#userPopup, #logoutPopup {
+#userPopup, #logoutPopup, #adminPopup, #removeAdminPopup {
     display: none;
     position: fixed;
     top: 50%;
@@ -87,26 +86,35 @@
     transform: translate(-50%, -50%);
     background-color: #fff;
     border: 1px solid #ddd;
-    padding: 30px; /* Увеличиваем отступы */
+    padding: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     text-align: center;
 }
 
-#userPopup .popup-content, #logoutPopup .popup-content {
-    max-width: 400px; /* Увеличиваем ширину */
-    font-size: 1.25rem; /* Увеличиваем шрифт */
+#userPopup .popup-content, #logoutPopup .popup-content, #adminPopup .popup-content, #removeAdminPopup .popup-content {
+    max-width: 400px;
+    font-size: 1.25rem;
 }
 
 #userPopup .popup-content h3 {
-    font-size: 1.75rem; /* Увеличиваем заголовок */
+    font-size: 1.75rem;
 }
 
-#logoutPopup .popup-content button {
-    font-size: 1.25rem; /* Увеличиваем текст кнопок */
-    padding: 10px 20px; /* Увеличиваем размер кнопок */
+#logoutPopup .popup-content button, #adminPopup .popup-content button, #removeAdminPopup .popup-content button {
+    font-size: 1.25rem;
+    padding: 10px 20px;
 }
 
 .user-link {
     cursor: pointer;
+}
+
+.admin-buttons {
+    display: inline-block; /* Ограничиваем ширину контейнера */
+}
+
+.admin-buttons button {
+    display: inline-block; /* Кнопки в ряд */
+    margin-left: 10px; /* Отступ между кнопками */
 }

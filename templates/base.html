@@ -12,6 +12,7 @@
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col text-end p-3">
+                    <a href="{{ url_for('support') }}" class="text-dark fs-4 me-3">Поддержка</a>
                     {% if session.user_id %}
                         <span class="text-dark fs-4 me-3 user-link" onclick="toggleUserPopup()">{{ user.name }}</span>
                         <a href="#" class="text-dark fs-4" onclick="toggleLogoutPopup()">Выйти</a>
@@ -27,7 +28,7 @@
     <div class="container-fluid main-content">
         <div class="row">
             <nav class="col-md-3 col-lg-2 sidebar">
-                <h5>Каталог:</h5> <!-- Добавили двоеточие -->
+                <h5>Каталог:</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item"><a href="/" class="btn btn-outline-primary w-100 mb-2">Всё</a></li>
                     {% for direction in directions %}
@@ -68,7 +69,7 @@
     <div id="logoutPopup" class="popup">
         <div class="popup-content">
             <p>Действительно ли вы хотите выйти?</p>
-            <button class="btn btn-primary me-2" onclick="confirmLogout()">Да</button>
+            <a href="{{ url_for('logout') }}" class="btn btn-primary me-2">Да</a>
             <button class="btn btn-secondary" onclick="toggleLogoutPopup()">Нет</button>
         </div>
     </div>
@@ -79,22 +80,14 @@
             const userPopup = document.getElementById('userPopup');
             const logoutPopup = document.getElementById('logoutPopup');
             userPopup.style.display = userPopup.style.display === 'block' ? 'none' : 'block';
-            if (logoutPopup.style.display === 'block') {
-                logoutPopup.style.display = 'none';
-            }
+            if (logoutPopup.style.display === 'block') logoutPopup.style.display = 'none';
         }
 
         function toggleLogoutPopup() {
             const userPopup = document.getElementById('userPopup');
             const logoutPopup = document.getElementById('logoutPopup');
             logoutPopup.style.display = logoutPopup.style.display === 'block' ? 'none' : 'block';
-            if (userPopup.style.display === 'block') {
-                userPopup.style.display = 'none';
-            }
-        }
-
-        function confirmLogout() {
-            window.location.href = "{{ url_for('logout') }}";
+            if (userPopup.style.display === 'block') userPopup.style.display = 'none';
         }
 
         document.addEventListener('click', function(event) {
@@ -106,7 +99,6 @@
             if (userPopup && !userPopup.contains(event.target) && event.target !== userLink) {
                 userPopup.style.display = 'none';
             }
-
             if (logoutPopup && !logoutPopup.contains(event.target) && event.target !== logoutLink) {
                 logoutPopup.style.display = 'none';
             }

@@ -2,7 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -16,7 +15,6 @@ class User(db.Model):
         if only:
             return {field: getattr(self, field) for field in only}
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
-
 
 def init_db(app):
     db.init_app(app)
