@@ -2,15 +2,91 @@
 {% block title %}Вход{% endblock %}
 {% block content %}
     <h1>Вход</h1>
-    <form method="post">
+    <form method="post" id="loginForm" novalidate>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <input type="email" class="form-control" id="email" name="email" required
+                   pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+            <div class="form-text">Формат: user@example.com</div>
+            <div class="error-message" id="emailError"></div>
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Пароль</label>
             <input type="password" class="form-control" id="password" name="password" required>
+            <div class="error-message" id="passwordError"></div>
         </div>
         <button type="submit" class="btn btn-primary">Войти</button>
     </form>
+
+    <div id="errorAlert" class="alert alert-danger mt-3" style="display:none;"></div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const inputs = form.querySelectorAll('input');
+
+        let firstInteraction = false;
+
+        function handleFirstInteraction() {
+            if (!firstInteraction) {
+                firstInteraction = true;
+                inputs.forEach(input => {
+                    input.addEventListener('input', validateField);
+                });
+            }
+        }
+
+        function validateField(e) {
+            const field = e.target;
+            const errorElement = document.getElementById(`${field.id}Error`);
+
+            if (!field.checkValidity()) {
+                field.classList.add('is-invalid');
+                errorElement.textContent = field.validationMessage;
+                errorElement.style.display = 'block';
+            } else {
+                field.classList.remove('is-invalid');
+                errorElement.style.display = 'none';
+            }
+        }
+
+        inputs.forEach(input => {
+            input.addEventListener('focus', handleFirstInteraction);
+            input.addEventListener('blur', handleFirstInteraction);
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            handleFirstInteraction();
+
+            let isValid = true;
+            inputs.forEach(input => {
+                if (!input.checkValidity()) {
+                    input.classList.add('is-invalid');
+                    document.getElementById(`${input.id}Error`).textContent = input.validationMessage;
+                    document.getElementById(`${input.id}Error`).style.display = 'block';
+                    isValid = false;
+                }
+            });
+
+            if (!isValid) return;
+
+            const formData = new FormData(this);
+            const response = await fetch('/login', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                const error = await response.json();
+                const errorAlert = document.getElementById('errorAlert');
+                errorAlert.textContent = error.error;
+                errorAlert.style.display = 'block';
+                setTimeout(() => {
+                    errorAlert.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
 {% endblock %}
