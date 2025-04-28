@@ -1,15 +1,21 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, \
     session as flask_session
 from werkzeug.security import generate_password_hash, check_password_hash
-from data.db import db, User, init_db
+from data.db import db, User, Message, init_db
+from datetime import datetime
+import os
+import csv
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Константы путей к файлам
+DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+RESOURCES_PATH = os.path.join(DIRECTORY, 'data', 'resources.csv')
 
 
-def create_initial_users():
+def create_initial_users():  # Создание начальных пользователей (администраторов) при первом запуске
     with app.app_context():
         admin = db.session.query(User).filter_by(email='admin@example.com').first()
         if not admin:
@@ -30,9 +36,18 @@ def create_initial_users():
         db.session.commit()
 
 
-init_db(app)
-create_initial_users()
+def load_resources():  # Загрузка списка ресурсов из csv файла
+    resources = []
+    if os.path.exists(RESOURCES_PATH):
+        with open(RESOURCES_PATH, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            resources = list(reader)
+    return resources
 
+
+init_db(app)  # Инициализация БД и создание начальных пользователей
+create_initial_users()
+# Список направлений физики с описанием и формулами
 directions = [
     {"id": "механика", "name": "Механика", "description": "Изучение движения и равновесия.",
      "formulas": ["F = ma", "W = Fd"], "image": "mech.png"},
@@ -51,19 +66,19 @@ directions = [
 ]
 
 
-def get_current_user():
+def get_current_user():  # Возвращение текущего авторизованного пользователя из сессии
     if 'user_id' in flask_session:
         return db.session.query(User).get(flask_session['user_id'])
     return None
 
 
-@app.route('/')
+@app.route('/')  # Главная страница приложения, которая отображает список направлений физики
 def index():
     user = get_current_user()
     return render_template('index.html', directions=directions, user=user)
 
 
-@app.route('/direction/<direction_id>')
+@app.route('/direction/<direction_id>')  # Страница определённого направления физики по его id
 def direction(direction_id):
     user = get_current_user()
     direction = next((d for d in directions if d["id"] == direction_id), None)
@@ -73,21 +88,133 @@ def direction(direction_id):
     return "Направление не найдено", 404
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/messages', methods=['GET', 'POST'])  # Обработка отправки сообщений администраторам
+def messages():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    admins = db.session.query(User).filter_by(is_admin=1).all()
+
+    if request.method == 'POST':
+        admin_id = request.form.get('admin_id')
+        subject = request.form.get('subject')
+        body = request.form.get('body')
+
+        if not all([admin_id, subject, body]):
+            return jsonify({'error': 'Заполните все поля'}), 400
+
+        admin = db.session.query(User).get(admin_id)
+        if not admin or not admin.is_admin:
+            return jsonify({'error': 'Выбранный администратор не найден'}), 400
+
+        if admin.id == user.id:
+            return jsonify({'error': 'Нельзя отправить сообщение самому себе'}), 400
+
+        new_message = Message(
+            sender_id=user.id,
+            recipient_id=admin.id,
+            subject=subject,
+            body=body,
+            timestamp=datetime.now()
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        return jsonify({'success': True})
+
+    return render_template('messages.html', user=user, admins=admins)
+
+
+@app.route('/message/<int:message_id>')  # Просмотр конкретного сообщения по его id
+def view_message(message_id):
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    message = db.session.query(Message).get(message_id)
+    if not message:
+        return 'Сообщение не найдено', 404
+
+    if message.recipient_id == user.id:
+        message.is_read = True
+        db.session.commit()
+
+    if message.sender_id != user.id and message.recipient_id != user.id:
+        return 'Доступ запрещен', 403
+
+    return render_template('view_message.html', message=message, user=user)
+
+
+@app.route('/reply/<int:message_id>',
+           methods=['POST'])  # Отправка ответа на сообщение (доступно только администраторам)
+def reply_message(message_id):
+    user = get_current_user()
+    if not user or not user.is_admin:
+        return jsonify({'error': 'Доступ запрещен'}), 403
+
+    original_message = db.session.query(Message).get(message_id)
+    if not original_message:
+        return jsonify({'error': 'Сообщение не найдено'}), 404
+
+    body = request.form.get('body')
+    if not body:
+        return jsonify({'error': 'Введите текст ответа'}), 400
+
+    reply = Message(
+        sender_id=user.id,
+        recipient_id=original_message.sender_id,
+        subject=original_message.subject,
+        body=body,
+        reply_to_id=original_message.id
+    )
+    db.session.add(reply)
+    db.session.commit()
+
+    return jsonify({'success': True})
+
+
+@app.route('/inbox')  # Страница входящих сообщений пользователя
+def inbox():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    received_messages = db.session.query(Message).filter_by(recipient_id=user.id).order_by(
+        Message.timestamp.desc()).all()
+    return render_template('inbox.html', messages=received_messages, user=user)
+
+
+@app.route('/sent')  # Страница отправленных сообщений пользователя
+def sent_messages():
+    user = get_current_user()
+    if not user:
+        return redirect(url_for('login'))
+
+    sent_messages = db.session.query(Message).filter_by(sender_id=user.id).order_by(
+        Message.timestamp.desc()).all()
+    return render_template('sent_messages.html', messages=sent_messages, user=user)
+
+
+@app.route('/register', methods=['GET',
+                                 'POST'])  # Регистрация новых пользователей с проверкой на корректный ввод данных
 def register():
     if request.method == 'POST':
         name = request.form['name']
         email = request.form['email']
         password = request.form['password']
-        if not any(c.isalpha() and c.isascii() for c in name):
+        if not any(symbol.isalpha() and symbol.isascii() for symbol in name):
             return jsonify({
-                'error': 'Имя должно содержать хотя бы одну латинскую букву'
+                'error': 'Имя должно содержать латинские буквы'
             }), 400
         if name.count('_') > 5:
             return jsonify({
                 'error': 'Имя может содержать не более 5 символов _'
             }), 400
-        if not all(c.isalnum() or c == '_' for c in name):
+        if '__' in name:
+            return jsonify({
+                'error': 'Имя не может содержать подряд идущие символы _'
+            }), 400
+        if not all(symbol.isalnum() or symbol == '_' for symbol in name):
             return jsonify({
                 'error': 'Имя может содержать только буквы, цифры и символ _'
             }), 400
@@ -95,11 +222,11 @@ def register():
             return jsonify({
                 'error': 'Имя должно содержать не менее 8 символов'
             }), 400
-        if not any(c.isalpha() for c in name):
+        if not any(symbol.isalpha() for symbol in name):
             return jsonify({
                 'error': 'Имя должно содержать хотя бы одну букву'
             }), 400
-        if not any(c.isdigit() for c in name):
+        if not any(symbol.isdigit() for symbol in name):
             return jsonify({
                 'error': 'Имя должно содержать хотя бы одну цифру'
             }), 400
@@ -112,7 +239,7 @@ def register():
             return jsonify({'error': 'Введите часть email до символа @'}), 400
         if local_part[0].isdigit():
             return jsonify({'error': 'Email не может начинаться с цифры'}), 400
-        if not any(c.isalpha() for c in local_part):
+        if not any(symbol.isalpha() for symbol in local_part):
             return jsonify({'error': 'Email до @ должен содержать хотя бы одну букву'}), 400
         allowed_special = set('.-_')
         for i, char in enumerate(local_part):
@@ -145,11 +272,11 @@ def register():
             return jsonify({
                 'error': 'Пароль должен содержать не менее 8 символов'
             }), 400
-        if not any(c.isalpha() for c in password):
+        if not any(symbol.isalpha() for symbol in password):
             return jsonify({
                 'error': 'Пароль должен содержать хотя бы одну букву'
             }), 400
-        if not any(c.isdigit() for c in password):
+        if not any(symbol.isdigit() for symbol in password):
             return jsonify({
                 'error': 'Пароль должен содержать хотя бы одну цифру'
             }), 400
@@ -165,7 +292,7 @@ def register():
     return render_template('register.html', directions=directions)
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])  # Авторизация пользователей
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -187,47 +314,95 @@ def login():
     return render_template('login.html', directions=directions)
 
 
-@app.route('/logout')
+@app.route('/logout')  # Выход из системы
 def logout():
     flask_session.pop('user_id', None)
     return redirect(url_for('index'))
 
 
-@app.route('/support', methods=['GET', 'POST'])
+@app.route('/support', methods=['GET', 'POST'])  # Страница поддержки и администрирования
 def support():
     user = get_current_user()
-    show_admin_popup = flask_session.get('show_admin_popup', False)
-    show_remove_admin_popup = flask_session.get('show_remove_admin_popup', False)
+    admins = db.session.query(User).filter_by(is_admin=1).all()
     error_message = None
+    success_message = None
+    warning_message = None
 
     if request.method == 'POST':
         action = request.form.get('action')
-        if action == 'add_admin' and user and user.is_admin == 1:
+
+        if action == 'send_message':
+            admin_id = request.form.get('admin_id')
+            subject = request.form.get('subject')
+            body = request.form.get('body')
+
+            if not all([admin_id, subject, body]):
+                error_message = 'Заполните все поля'
+            else:
+                admin = db.session.query(User).get(admin_id)
+                if not admin or not admin.is_admin:
+                    error_message = 'Выбранный администратор не найден'
+                elif admin.id == user.id:
+                    error_message = 'Нельзя отправить сообщение самому себе'
+                else:
+                    new_message = Message(
+                        sender_id=user.id,
+                        recipient_id=admin.id,
+                        subject=subject,
+                        body=body,
+                        timestamp=datetime.now()
+                    )
+                    db.session.add(new_message)
+                    db.session.commit()
+                    success_message = 'Сообщение успешно отправлено администратору'
+
+        elif action == 'add_admin' and user and user.is_admin == 1:
             email = request.form.get('email')
             target_user = db.session.query(User).filter_by(email=email).first()
             if target_user:
-                target_user.is_admin = 1
-                db.session.commit()
-                flask_session['show_admin_popup'] = False
+                if target_user.is_admin == 1:
+                    warning_message = f'Пользователь с email {email} уже является администратором'
+                else:
+                    target_user.is_admin = 1
+                    db.session.commit()
+                    success_message = f'Пользователь {email} теперь администратор'
             else:
                 error_message = 'Пользователя с таким email не существует'
-                flask_session['show_admin_popup'] = True
         elif action == 'remove_admin' and user and user.is_admin == 1:
-            user.is_admin = 0
-            db.session.commit()
-            flask_session['show_remove_admin_popup'] = False
-            return redirect(url_for('index'))
-        elif action == 'toggle_admin_popup' and user and user.is_admin == 1:
-            flask_session['show_admin_popup'] = not show_admin_popup
-            flask_session['show_remove_admin_popup'] = False
-        elif action == 'toggle_remove_admin_popup' and user and user.is_admin == 1:
-            flask_session['show_remove_admin_popup'] = not show_remove_admin_popup
-            flask_session['show_admin_popup'] = False
+            admin_id = request.form.get('admin_id')
+            target_admin = db.session.query(User).get(admin_id)
+            if target_admin:
+                if target_admin.id == user.id:
+                    error_message = 'Вы не можете исключить самого себя'
+                else:
+                    target_admin.is_admin = 0
+                    db.session.commit()
+                    success_message = f'Пользователь {target_admin.email} больше не администратор'
+            else:
+                error_message = 'Администратор не найден'
 
-    return render_template('support.html', user=user, directions=directions,
-                           show_admin_popup=show_admin_popup,
-                           show_remove_admin_popup=show_remove_admin_popup,
-                           error_message=error_message)
+    return render_template('support.html',
+                           user=user,
+                           admins=admins,
+                           error_message=error_message,
+                           success_message=success_message,
+                           warning_message=warning_message)
+
+
+@app.route('/resources')  # Страница с полезными ресурсами по физике
+def resources():
+    user = get_current_user()
+    resources = load_resources()
+    filter_category = request.args.get('category')
+    if filter_category:
+        resources = [el for el in resources if el['category'] == filter_category]
+    all_categories = sorted({el['category'] for el in load_resources()})
+    return render_template('resources.html',
+                           resources=resources,
+                           directions=directions,
+                           user=user,
+                           all_categories=all_categories,
+                           current_category=filter_category)
 
 
 if __name__ == '__main__':
