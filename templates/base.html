@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Мой сайт{% endblock %}</title>
+    <title>{% block title %}ScienceSpark{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -11,15 +11,23 @@
     <header class="top-bar">
         <div class="container-fluid">
             <div class="row align-items-center">
-                <div class="col text-end p-3">
-                    <a href="{{ url_for('support') }}" class="text-dark fs-4 me-3">Поддержка</a>
-                    {% if session.user_id %}
-                        <span class="text-dark fs-4 me-3 user-link" onclick="toggleUserPopup()">{{ user.name }}</span>
-                        <a href="#" class="text-dark fs-4" onclick="toggleLogoutPopup()">Выйти</a>
-                    {% else %}
-                        <a href="{{ url_for('register') }}" class="text-dark fs-4">Регистрация</a>
-                        <a href="{{ url_for('login') }}" class="text-dark fs-4 ms-3">Войти</a>
-                    {% endif %}
+                <div class="col d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='images/physics.png') }}" alt="Логотип ScienceSpark" class="site-logo me-3">
+                        <h1 class="site-title mb-0">ScienceSpark</h1>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        {% if session.user_id %}
+                            <a href="{{ url_for('support') }}" class="text-dark fs-4 me-3">Поддержка</a>
+                            <a href="{{ url_for('inbox') }}" class="text-dark fs-4 me-3">Входящие</a>
+                            <a href="{{ url_for('sent_messages') }}" class="text-dark fs-4 me-3">Отправленные</a>
+                            <span class="text-dark fs-4 me-3 user-link" onclick="toggleUserPopup()">{{ user.name }}</span>
+                            <a href="#" class="text-dark fs-4" onclick="toggleLogoutPopup()">Выйти</a>
+                        {% else %}
+                            <a href="{{ url_for('register') }}" class="text-dark fs-4">Регистрация</a>
+                            <a href="{{ url_for('login') }}" class="text-dark fs-4 ms-3">Войти</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -30,12 +38,15 @@
             <nav class="col-md-3 col-lg-2 sidebar">
                 <h5>Каталог:</h5>
                 <ul class="nav flex-column">
-                    <li class="nav-item"><a href="/" class="btn btn-outline-primary w-100 mb-2">Всё</a></li>
+                    <li class="nav-item"><a href="/" class="btn btn-outline-primary w-100 mb-2">Направления</a></li>
                     {% for direction in directions %}
                         <li class="nav-item">
                             <a href="{{ url_for('direction', direction_id=direction.id) }}" class="btn btn-outline-primary w-100 mb-2">{{ direction.name }}</a>
                         </li>
                     {% endfor %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('resources') }}" class="btn btn-outline-success w-100 mb-2">Полезные материалы</a>
+                    </li>
                 </ul>
             </nav>
             <main class="col-md-9 col-lg-10">
@@ -45,11 +56,13 @@
     </div>
 
     <footer class="bottom-bar">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col text-center p-2">
-                    <p class="text-white mb-0">Информация будет добавлена позже</p>
+        <div class="container">
+            <div class="footer-content text-center">
+                <div class="footer-text mb-1">Откройте для себя мир физики!</div>
+                <div class="footer-email mb-1">
+                    <a href="mailto:egork.piskunoff@yandex.com" class="text-white">E-mail: egork.piskunoff@yandex.com</a>
                 </div>
+                <div class="footer-copyright small">© 2025 QuantumLearn</div>
             </div>
         </div>
     </footer>
@@ -60,7 +73,7 @@
             <h3>{{ user.name }}</h3>
             <p>Рейтинг: {{ user.rating }}</p>
             {% if user.is_admin == 1 %}
-                <p>Админы рулят</p>
+                <p>Администратор</p>
             {% endif %}
         </div>
     </div>
