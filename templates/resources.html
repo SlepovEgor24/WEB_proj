@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Полезные материалы{% endblock %}
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Полезные материалы по физике</h1>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Фильтр по темам</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('resources') }}"
+                   class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Все темы
+                </a>
+                {% for category in all_categories %}
+                <a href="{{ url_for('resources', category=category) }}"
+                   class="btn btn-sm {% if current_category == category %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    {{ category }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Категория</th>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Ссылка</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resource in resources %}
+                <tr>
+                    <td>{{ resource.category }}</td>
+                    <td>{{ resource.title }}</td>
+                    <td>{{ resource.description }}</td>
+                    <td>
+                        <a href="{{ resource.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            Перейти
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">Нет материалов по выбранной теме</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

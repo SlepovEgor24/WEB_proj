@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Отправить сообщение{% endblock %}
+{% block content %}
+    <h1>Отправить сообщение администратору</h1>
+    <form id="messageForm">
+        <div class="mb-3">
+            <label for="admin_id" class="form-label">Администратор</label>
+            <select class="form-select" id="admin_id" name="admin_id" required>
+                <option value="">Выберите администратора</option>
+                {% for admin in admins %}
+                    <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="subject" class="form-label">Тема</label>
+            <input type="text" class="form-control" id="subject" name="subject" required>
+        </div>
+        <div class="mb-3">
+            <label for="body" class="form-label">Сообщение</label>
+            <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Отправить</button>
+    </form>
+    <div id="errorAlert" class="alert alert-danger mt-3" style="display:none;"></div>
+    <div id="successAlert" class="alert alert-success mt-3" style="display:none;"></div>
+
+    <script>
+        document.getElementById('messageForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const response = await fetch('/messages', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                document.getElementById('successAlert').textContent = 'Сообщение отправлено';
+                document.getElementById('successAlert').style.display = 'block';
+                document.getElementById('errorAlert').style.display = 'none';
+                this.reset();
+            } else {
+                document.getElementById('errorAlert').textContent = result.error;
+                document.getElementById('errorAlert').style.display = 'block';
+                document.getElementById('successAlert').style.display = 'none';
+            }
+        });
+    </script>
+{% endblock %}

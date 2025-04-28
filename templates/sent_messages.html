@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Отправленные{% endblock %}
+{% block content %}
+    <h1>Отправленные сообщения</h1>
+    {% if not messages %}
+        <p>У вас нет отправленных сообщений</p>
+    {% else %}
+        <div class="list-group">
+            {% for message in messages %}
+                <a href="{{ url_for('view_message', message_id=message.id) }}"
+                   class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ message.subject }}</h5>
+                        <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <p class="mb-1">Кому: {{ message.recipient.name }} ({{ message.recipient.email }})</p>
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

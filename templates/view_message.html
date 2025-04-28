@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ message.subject }}{% endblock %}
+{% block content %}
+    <h1>{{ message.subject }}</h1>
+    <div class="card mb-3">
+        <div class="card-header">
+            От: {{ message.sender.name }} ({{ message.sender.email }})
+            <small class="text-muted float-end">{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ message.body }}</p>
+        </div>
+    </div>
+
+    {% if message.replies %}
+        <h3>Ответы</h3>
+        {% for reply in message.replies %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    От: {{ reply.sender.name }} ({{ reply.sender.email }})
+                    <small class="text-muted float-end">{{ reply.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ reply.body }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if user.is_admin and message.recipient_id == user.id %}
+        <h3>Ответить</h3>
+        <form id="replyForm">
+            <div class="mb-3">
+                <textarea class="form-control" id="body" name="body" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить ответ</button>
+        </form>
+        <div id="replyError" class="alert alert-danger mt-3" style="display:none;"></div>
+
+        <script>
+            document.getElementById('replyForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const response = await fetch('/reply/{{ message.id }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    document.getElementById('replyError').textContent = result.error;
+                    document.getElementById('replyError').style.display = 'block';
+                }
+            });
+        </script>
+    {% endif %}
+{% endblock %}
