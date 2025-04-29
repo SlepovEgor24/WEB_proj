@@ -8,6 +8,8 @@ import requests
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
+TOKEN = "8129948923:AAEBAULMQmeXS41nmWZecxBWL4AH_e2TBlY"  # Замените на токен своего бота
+
 
 # Парсинг адреса сайта из файла конфигурации
 def parse_site_url(config_file="config.txt"):
@@ -30,7 +32,7 @@ except Exception as e:
     FLASK_API_URL = "http://127.0.0.1:5000/api"  # Значение по умолчанию
 
 # Инициализация бота и диспетчера
-bot = Bot(token="8129948923:AAEBAULMQmeXS41nmWZecxBWL4AH_e2TBlY")  # Замени YOUR_BOT_TOKEN на токен твоего бота
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 router = Router()
 
