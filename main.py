@@ -7,7 +7,7 @@ import csv
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
+app.config['SECRET_KEY'] = 'EKKOKS'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Константы путей к файлам
@@ -18,8 +18,10 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def create_initial_users():  # Создание начальных пользователей (администраторов) при первом запуске
     with app.app_context():
@@ -41,6 +43,7 @@ def create_initial_users():  # Создание начальных пользо�
             db.session.add(new_first)
 
         db.session.commit()
+
 
 def create_initial_directions():  # Создание начальных направлений и законов
     with app.app_context():
@@ -89,6 +92,7 @@ def create_initial_directions():  # Создание начальных напр
                     db.session.add(new_law)
             db.session.commit()
 
+
 def load_resources():  # Загрузка списка ресурсов из csv файла
     resources = []
     if os.path.exists(RESOURCES_PATH):
@@ -97,20 +101,25 @@ def load_resources():  # Загрузка списка ресурсов из csv
             resources = list(reader)
     return resources
 
+
 def load_directions():  # Загрузка направлений из базы данных
     return db.session.query(Direction).all()
+
 
 init_db(app)  # Инициализация БД
 create_initial_users()
 create_initial_directions()
+
 
 def get_current_user():  # Возвращение текущего авторизованного пользователя из сессии
     if 'user_id' in flask_session:
         return db.session.get(User, flask_session['user_id'])
     return None
 
+
 # Создание Blueprint для API
 api_bp = Blueprint('api', __name__, url_prefix='/api')
+
 
 @api_bp.route('/directions', methods=['GET'])
 def get_directions_api():
@@ -120,6 +129,7 @@ def get_directions_api():
         for d in directions
     ]
     return jsonify(directions_list)
+
 
 @api_bp.route('/laws/<direction_name>', methods=['GET'])
 def get_laws_api(direction_name):
@@ -133,6 +143,7 @@ def get_laws_api(direction_name):
     ]
     return jsonify(laws_list)
 
+
 @api_bp.route('/law/<int:law_id>', methods=['GET'])
 def get_law_api(law_id):
     law = db.session.get(Law, law_id)
@@ -145,8 +156,10 @@ def get_law_api(law_id):
         "text": law.text
     })
 
+
 # Регистрация Blueprint
 app.register_blueprint(api_bp)
+
 
 @app.route('/')  # Главная страница приложения, которая отображает список направлений физики
 def index():
@@ -155,6 +168,7 @@ def index():
     print("Directions:", [(d.id, d.name, d.image_path, d.description) for d in directions])  # Отладочный вывод
     print("User:", user)  # Отладочный вывод
     return render_template('index.html', directions=directions, user=user)
+
 
 @app.route('/direction/<direction_name>')  # Страница направления с карточками законов
 def direction(direction_name):
@@ -166,6 +180,7 @@ def direction(direction_name):
     directions = load_directions()
     return render_template('direction.html', direction=direction, laws=laws, user=user, directions=directions)
 
+
 @app.route('/law/<int:law_id>')  # Страница конкретного закона
 def law(law_id):
     user = get_current_user()
@@ -174,6 +189,7 @@ def law(law_id):
         return "Закон не найден", 404
     directions = load_directions()
     return render_template('law.html', law=law, user=user, directions=directions)
+
 
 @app.route('/messages', methods=['GET', 'POST'])  # Обработка отправки сообщений администраторам
 def messages():
@@ -227,6 +243,7 @@ def messages():
     directions = load_directions()
     return render_template('messages.html', user=user, admins=admins, directions=directions)
 
+
 @app.route('/message/<int:message_id>')  # Просмотр конкретного сообщения по его id
 def view_message(message_id):
     user = get_current_user()
@@ -246,6 +263,7 @@ def view_message(message_id):
 
     directions = load_directions()
     return render_template('view_message.html', message=message, user=user, directions=directions)
+
 
 @app.route('/reply/<int:message_id>', methods=['POST'])  # Отправка ответа на сообщение
 def reply_message(message_id):
@@ -272,6 +290,7 @@ def reply_message(message_id):
     db.session.commit()
 
     return jsonify({'success': True})
+
 
 @app.route('/rate_message/<int:message_id>/<action>', methods=['POST'])  # Изменение рейтинга за сообщение
 def rate_message(message_id, action):
@@ -301,6 +320,7 @@ def rate_message(message_id, action):
 
     return jsonify({'success': True, 'new_rating': sender.rating})
 
+
 @app.route('/inbox')  # Страница входящих сообщений пользователя
 def inbox():
     user = get_current_user()
@@ -312,6 +332,7 @@ def inbox():
     directions = load_directions()
     return render_template('inbox.html', messages=received_messages, user=user, directions=directions)
 
+
 @app.route('/sent')  # Страница отправленных сообщений пользователя
 def sent_messages():
     user = get_current_user()
@@ -322,6 +343,7 @@ def sent_messages():
         Message.timestamp.desc()).all()
     directions = load_directions()
     return render_template('sent_messages.html', messages=sent_messages, user=user, directions=directions)
+
 
 @app.route('/register', methods=['GET', 'POST'])  # Регистрация новых пользователей
 def register():
@@ -414,6 +436,7 @@ def register():
     directions = load_directions()
     return render_template('register.html', directions=directions)
 
+
 @app.route('/login', methods=['GET', 'POST'])  # Авторизация пользователей
 def login():
     if request.method == 'POST':
@@ -436,10 +459,12 @@ def login():
     directions = load_directions()
     return render_template('login.html', directions=directions)
 
+
 @app.route('/logout')  # Выход из системы
 def logout():
     flask_session.pop('user_id', None)
     return redirect(url_for('index'))
+
 
 @app.route('/support', methods=['GET', 'POST'])  # Страница поддержки и администрирования
 def support():
@@ -568,6 +593,7 @@ def support():
                            success_message=success_message,
                            warning_message=warning_message)
 
+
 @app.route('/resources')  # Страница с полезными ресурсами по физике
 def resources():
     user = get_current_user()
@@ -583,6 +609,7 @@ def resources():
                            user=user,
                            all_categories=all_categories,
                            current_category=filter_category)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

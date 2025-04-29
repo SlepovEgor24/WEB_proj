@@ -8,6 +8,7 @@ import requests
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
+
 # Парсинг адреса сайта из файла конфигурации
 def parse_site_url(config_file="config.txt"):
     try:
@@ -18,6 +19,7 @@ def parse_site_url(config_file="config.txt"):
         raise ValueError("SITE_URL not found in config file")
     except FileNotFoundError:
         raise FileNotFoundError(f"Config file {config_file} not found")
+
 
 # Глобальная переменная для адреса сайта
 try:
@@ -32,6 +34,7 @@ bot = Bot(token="8129948923:AAEBAULMQmeXS41nmWZecxBWL4AH_e2TBlY")  # Замен�
 dp = Dispatcher()
 router = Router()
 
+
 # Функция для получения списка направлений через API
 async def get_directions():
     try:
@@ -41,6 +44,7 @@ async def get_directions():
     except requests.RequestException as e:
         logging.error(f"Ошибка при получении направлений: {e}")
         return []
+
 
 # Функция для получения законов направления через API
 async def get_laws(direction_name):
@@ -52,6 +56,7 @@ async def get_laws(direction_name):
         logging.error(f"Ошибка при получении законов для {direction_name}: {e}")
         return []
 
+
 # Функция для получения информации о законе через API
 async def get_law(law_id):
     try:
@@ -61,6 +66,7 @@ async def get_law(law_id):
     except requests.RequestException as e:
         logging.error(f"Ошибка при получении закона {law_id}: {e}")
         return {}
+
 
 # Создание клавиатуры с направлениями
 async def create_directions_keyboard():
@@ -76,6 +82,7 @@ async def create_directions_keyboard():
         resize_keyboard=True,
         one_time_keyboard=True
     )
+
 
 # Создание клавиатуры с законами направления
 async def create_laws_keyboard(direction_name):
@@ -94,6 +101,7 @@ async def create_laws_keyboard(direction_name):
         one_time_keyboard=True
     )
 
+
 # Создание клавиатуры после выбора закона
 def create_law_navigation_keyboard(direction_name):
     keyboard_rows = [
@@ -108,6 +116,7 @@ def create_law_navigation_keyboard(direction_name):
         one_time_keyboard=True
     )
 
+
 # Обработчик команды /start
 @router.message(CommandStart())
 async def cmd_start(message: Message):
@@ -121,6 +130,7 @@ async def cmd_start(message: Message):
         reply_markup=keyboard
     )
 
+
 # Обработчик выбора направления или кнопки "Направления"
 @router.message(F.text == "Направления")
 async def show_directions(message: Message):
@@ -132,6 +142,7 @@ async def show_directions(message: Message):
         "Выбери направление:",
         reply_markup=keyboard
     )
+
 
 # Обработчик выбора закона или кнопки "Законы (в данном направлении)"
 @router.message(lambda message: message.text.startswith("Законы ("))
@@ -145,6 +156,7 @@ async def show_laws_in_direction(message: Message):
         f"Законы в направлении {direction_name}:",
         reply_markup=keyboard
     )
+
 
 # Обработчик выбора направления или закона
 @router.message()
@@ -182,10 +194,12 @@ async def handle_message(message: Message):
     # Если текст не распознан
     await message.answer("Пожалуйста, выбери направление или закон из клавиатуры.")
 
+
 # Запуск бота
 async def main():
     dp.include_router(router)
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
