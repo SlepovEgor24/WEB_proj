@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session as flask_session
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session as flask_session, Blueprint
 from werkzeug.security import generate_password_hash, check_password_hash
 from data.db import db, User, Message, Direction, Law, init_db
 from datetime import datetime
@@ -108,6 +108,45 @@ def get_current_user():  # Возвращение текущего автори�
     if 'user_id' in flask_session:
         return db.session.get(User, flask_session['user_id'])
     return None
+
+# Создание Blueprint для API
+api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+@api_bp.route('/directions', methods=['GET'])
+def get_directions_api():
+    directions = load_directions()
+    directions_list = [
+        {"id": d.id, "name": d.name, "image_path": d.image_path, "description": d.description}
+        for d in directions
+    ]
+    return jsonify(directions_list)
+
+@api_bp.route('/laws/<direction_name>', methods=['GET'])
+def get_laws_api(direction_name):
+    direction = db.session.query(Direction).filter_by(name=direction_name).first()
+    if not direction:
+        return jsonify({"error": "Направление не найдено"}), 404
+    laws = db.session.query(Law).filter_by(direction_id=direction.id).all()
+    laws_list = [
+        {"id": law.id, "name": law.name, "description": law.description, "text": law.text}
+        for law in laws
+    ]
+    return jsonify(laws_list)
+
+@api_bp.route('/law/<int:law_id>', methods=['GET'])
+def get_law_api(law_id):
+    law = db.session.get(Law, law_id)
+    if not law:
+        return jsonify({"error": "Закон не найден"}), 404
+    return jsonify({
+        "id": law.id,
+        "name": law.name,
+        "description": law.description,
+        "text": law.text
+    })
+
+# Регистрация Blueprint
+app.register_blueprint(api_bp)
 
 @app.route('/')  # Главная страница приложения, которая отображает список направлений физики
 def index():
@@ -321,7 +360,7 @@ def register():
         allowed_special = set('.-_')
         for i, char in enumerate(local_part):
             if not (char.isalnum() or char in allowed_special):
-                return jsonify({'error': f'Недопустим Noy символ "{char}" в email'}), 400
+                return jsonify({'error': f'Недопустимый символ "{char}" в email'}), 400
             if char in allowed_special and i in [0, len(local_part) - 1]:
                 return jsonify(
                     {'error': 'Email не может начинаться или заканчиваться на символы .-_'}), 400
@@ -486,14 +525,14 @@ def support():
             content_type = request.form.get('content_type')
             name = request.form.get('name')
             description = request.form.get('description')
-            image = request.files.get('image')
 
             if not all([content_type, name, description]):
                 error_message = 'Заполните все поля'
-            elif content_type == 'direction' and (not image or not allowed_file(image.filename)):
-                error_message = 'Загрузите изображение в формате PNG, JPG, JPEG или GIF'
-            else:
-                if content_type == 'direction':
+            elif content_type == 'direction':
+                image = request.files.get('image')
+                if not image or not allowed_file(image.filename):
+                    error_message = 'Загрузите изображение в формате PNG, JPG, JPEG или GIF'
+                else:
                     filename = secure_filename(image.filename)
                     image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     image.save(image_path)
@@ -504,21 +543,22 @@ def support():
                     )
                     db.session.add(new_direction)
                     success_message = f'Направление "{name}" успешно добавлено'
-                elif content_type == 'law':
-                    direction_id = request.form.get('direction_id')
-                    text = request.form.get('text')
-                    if not direction_id or not text:
-                        error_message = 'Выберите направление и введите текст закона'
-                    else:
-                        new_law = Law(
-                            name=name,
-                            direction_id=direction_id,
-                            description=description,
-                            text=text
-                        )
-                        db.session.add(new_law)
-                        success_message = f'Закон "{name}" успешно добавлен'
-                db.session.commit()
+                    db.session.commit()
+            elif content_type == 'law':
+                direction_id = request.form.get('direction_id')
+                text = request.form.get('text')
+                if not direction_id or not text:
+                    error_message = 'Выберите направление и введите текст закона'
+                else:
+                    new_law = Law(
+                        name=name,
+                        direction_id=direction_id,
+                        description=description,
+                        text=text
+                    )
+                    db.session.add(new_law)
+                    success_message = f'Закон "{name}" успешно добавлен'
+                    db.session.commit()
 
     return render_template('support.html',
                            user=user,

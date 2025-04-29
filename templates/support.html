@@ -50,9 +50,9 @@
                         <label for="name" class="form-label">Название</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3" id="image_field">
                         <label for="image" class="form-label">Изображение</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">Сводка</label>
@@ -144,18 +144,32 @@
                     bsAlert.close();
                 });
             }, 5000);
+            toggleFields(); // Инициализация полей при загрузке
         });
 
         function toggleFields() {
             const contentType = document.getElementById('content_type').value;
-            document.getElementById('direction_field').style.display = contentType === 'law' ? 'block' : 'none';
-            document.getElementById('text_field').style.display = contentType === 'law' ? 'block' : 'none';
+            const directionField = document.getElementById('direction_field');
+            const textField = document.getElementById('text_field');
+            const imageField = document.getElementById('image_field');
+            const imageInput = document.getElementById('image');
+
+            directionField.style.display = contentType === 'law' ? 'block' : 'none';
+            textField.style.display = contentType === 'law' ? 'block' : 'none';
+            imageField.style.display = contentType === 'law' ? 'none' : 'block';
+
             if (contentType === 'law') {
                 document.getElementById('direction_id').required = true;
                 document.getElementById('text').required = true;
+                imageInput.removeAttribute('required');
+            } else if (contentType === 'direction') {
+                document.getElementById('direction_id').required = false;
+                document.getElementById('text').required = false;
+                imageInput.setAttribute('required', 'required');
             } else {
                 document.getElementById('direction_id').required = false;
                 document.getElementById('text').required = false;
+                imageInput.setAttribute('required', 'required');
             }
         }
     </script>
