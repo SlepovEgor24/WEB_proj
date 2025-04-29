@@ -3,10 +3,21 @@
 {% block content %}
     <h1>{{ direction.name }}</h1>
     <p>{{ direction.description }}</p>
-    <h3>Формулы</h3>
-    <ul>
-        {% for formula in direction.formulas %}
-            <li>{{ formula }}</li>
-        {% endfor %}
-    </ul>
+    <h3>Законы и формулы</h3>
+    {% if not laws %}
+        <p>Законы для этого направления пока не добавлены.</p>
+    {% else %}
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            {% for law in laws %}
+                <div class="col">
+                    <a href="{{ url_for('law', law_id=law.id) }}" class="card law-card text-decoration-none text-dark">
+                        <div class="card-body text-start">
+                            <h5 class="card-title">{{ law.name }}</h5>
+                            <p class="card-text">{{ law.description }}</p>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 {% endblock %}

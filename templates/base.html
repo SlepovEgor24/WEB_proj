@@ -17,12 +17,12 @@
                         <h1 class="site-title mb-0">ScienceSpark</h1>
                     </div>
                     <div class="d-flex align-items-center">
-                        {% if session.user_id %}
+                        {% if session.user_id and user %}
                             <a href="{{ url_for('support') }}" class="text-dark fs-4 me-3">Поддержка</a>
                             <a href="{{ url_for('inbox') }}" class="text-dark fs-4 me-3">Входящие</a>
                             <a href="{{ url_for('sent_messages') }}" class="text-dark fs-4 me-3">Отправленные</a>
                             <span class="text-dark fs-4 me-3 user-link" onclick="toggleUserPopup()">{{ user.name }}</span>
-                            <a href="#" class="text-dark fs-4" onclick="toggleLogoutPopup()">Выйти</a>
+                            <a href="#" class="btn btn-danger logout-btn-inline me-3" onclick="toggleLogoutPopup()">Выйти</a>
                         {% else %}
                             <a href="{{ url_for('register') }}" class="text-dark fs-4">Регистрация</a>
                             <a href="{{ url_for('login') }}" class="text-dark fs-4 ms-3">Войти</a>
@@ -39,11 +39,15 @@
                 <h5>Каталог:</h5>
                 <ul class="nav flex-column">
                     <li class="nav-item"><a href="/" class="btn btn-outline-primary w-100 mb-2">Направления</a></li>
-                    {% for direction in directions %}
-                        <li class="nav-item">
-                            <a href="{{ url_for('direction', direction_id=direction.id) }}" class="btn btn-outline-primary w-100 mb-2">{{ direction.name }}</a>
-                        </li>
-                    {% endfor %}
+                    {% if directions %}
+                        {% for direction in directions %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('direction', direction_name=direction.name) }}" class="btn btn-outline-primary w-100 mb-2">{{ direction.name }}</a>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="nav-item"><p>Направления отсутствуют</p></li>
+                    {% endif %}
                     <li class="nav-item">
                         <a href="{{ url_for('resources') }}" class="btn btn-outline-success w-100 mb-2">Полезные материалы</a>
                     </li>
@@ -67,7 +71,7 @@
         </div>
     </footer>
 
-    {% if session.user_id %}
+    {% if session.user_id and user %}
     <div id="userPopup" class="popup">
         <div class="popup-content">
             <h3>{{ user.name }}</h3>

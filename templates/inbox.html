@@ -7,15 +7,44 @@
     {% else %}
         <div class="list-group">
             {% for message in messages %}
-                <a href="{{ url_for('view_message', message_id=message.id) }}"
-                   class="list-group-item list-group-item-action {% if not message.is_read %}fw-bold{% endif %}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{ message.subject }}</h5>
-                        <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-                    </div>
-                    <p class="mb-1">От: {{ message.sender.name }}</p>
-                </a>
+                <div class="list-group-item list-group-item-action {% if not message.is_read %}fw-bold{% endif %}">
+                    <a href="{{ url_for('view_message', message_id=message.id) }}" class="text-decoration-none text-dark">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ message.subject }}</h5>
+                            <small>{{ message.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">От: {{ message.sender.name }}</p>
+                    </a>
+                    {% if user.is_admin %}
+                        <div class="mt-2">
+                            {% if not message.rating_changed %}
+                                <button class="btn btn-sm btn-success rate-btn" data-message-id="{{ message.id }}" data-action="up">Хорошее сообщение +1</button>
+                                <button class="btn btn-sm btn-danger rate-btn" data-message-id="{{ message.id }}" data-action="down">Спам -1</button>
+                            {% else %}
+                                <span class="text-muted">Рейтинг изменён: {{ 'Хорошее сообщение (+1)' if message.rating_change == 1 else 'Спам (-1)' }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
             {% endfor %}
         </div>
     {% endif %}
+
+    <script>
+        document.querySelectorAll('.rate-btn').forEach(button => {
+            button.addEventListener('click', async function() {
+                const messageId = this.getAttribute('data-message-id');
+                const action = this.getAttribute('data-action');
+                const response = await fetch(`/rate_message/${messageId}/${action}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert(result.error);
+                }
+            });
+        });
+    </script>
 {% endblock %}

@@ -7,8 +7,9 @@
             <label for="admin_id" class="form-label">Администратор</label>
             <select class="form-select" id="admin_id" name="admin_id" required>
                 <option value="">Выберите администратора</option>
+                <option value="all">Всем</option>
                 {% for admin in admins %}
-                    <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
+                    <option value="{{ admin.id }}">{{ admin.name }}{% if admin.show_email %} ({{ admin.email }}){% endif %}</option>
                 {% endfor %}
             </select>
         </div>

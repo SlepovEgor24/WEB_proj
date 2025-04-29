@@ -20,6 +20,54 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     {% endif %}
+
+    {% if user and user.is_admin == 1 %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Добавление контента</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('support') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="add_content">
+                    <div class="mb-3">
+                        <label for="content_type" class="form-label">Тип контента</label>
+                        <select class="form-select" id="content_type" name="content_type" required onchange="toggleFields()">
+                            <option value="">Выберите тип</option>
+                            <option value="direction">Направление</option>
+                            <option value="law">Закон/Формула</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="direction_field" style="display:none;">
+                        <label for="direction_id" class="form-label">Направление</label>
+                        <select class="form-select" id="direction_id" name="direction_id">
+                            <option value="">Выберите направление</option>
+                            {% for direction in directions %}
+                                <option value="{{ direction.id }}">{{ direction.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Изображение</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Сводка</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3" id="text_field" style="display:none;">
+                        <label for="text" class="form-label">Текст закона</label>
+                        <textarea class="form-control" id="text" name="text" rows="5"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="card mb-4">
         <div class="card-body">
             <h2 class="card-title">Написать администратору</h2>
@@ -29,8 +77,9 @@
                     <label for="admin_id" class="form-label">Администратор</label>
                     <select class="form-select" id="admin_id" name="admin_id" required>
                         <option value="">Выберите администратора</option>
+                        <option value="all">Всем</option>
                         {% for admin in admins %}
-                            <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
+                            <option value="{{ admin.id }}">{{ admin.name }}{% if admin.show_email %} ({{ admin.email }}){% endif %}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -74,7 +123,7 @@
                                     <option value="">Выберите администратора</option>
                                     {% for admin in admins %}
                                         {% if admin.id != user.id %}
-                                            <option value="{{ admin.id }}">{{ admin.name }} ({{ admin.email }})</option>
+                                            <option value="{{ admin.id }}">{{ admin.name }}{% if admin.show_email %} ({{ admin.email }}){% endif %}</option>
                                         {% endif %}
                                     {% endfor %}
                                 </select>
@@ -96,5 +145,18 @@
                 });
             }, 5000);
         });
+
+        function toggleFields() {
+            const contentType = document.getElementById('content_type').value;
+            document.getElementById('direction_field').style.display = contentType === 'law' ? 'block' : 'none';
+            document.getElementById('text_field').style.display = contentType === 'law' ? 'block' : 'none';
+            if (contentType === 'law') {
+                document.getElementById('direction_id').required = true;
+                document.getElementById('text').required = true;
+            } else {
+                document.getElementById('direction_id').required = false;
+                document.getElementById('text').required = false;
+            }
+        }
     </script>
 {% endblock %}

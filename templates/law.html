@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ law.name }}{% endblock %}
+{% block content %}
+    <h1>{{ law.name }}</h1>
+    <p>{{ law.description }}</p>
+    <div class="card law-card">
+        <div class="card-body text-start">
+            <h5 class="card-title">{{ law.name }}</h5>
+            <p class="card-text">{{ law.text }}</p>
+        </div>
+    </div>
+{% endblock %}
