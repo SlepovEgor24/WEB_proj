@@ -242,3 +242,9 @@ body {
         padding: 15px;
     }
 }
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+}
